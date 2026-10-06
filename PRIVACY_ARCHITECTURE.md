@@ -31,3 +31,15 @@ Cloud notes are in `private_journals`; immutable non-text revisions and signal p
 Users can delete a note while preserving feelings, delete a day and its revisions, delete all history, erase the guest space or delete their cloud account. Research and marketing have no enabled collectors. Consent purposes are independent ledger entries with server timestamps, version, region and withdrawal. Core permission is distinct from optional AI. Withdrawal prevents future AI calls but cannot undo past provider processing.
 
 Exports include current observations, encrypted notes, consent history, preference values and correction ledger. Exports remain sensitive: structured feelings are readable. No raw journals are sold, no ad trackers run, no population analytics are enabled. Regional obligations require operational/legal review; the presence of schema fields does not establish GDPR or other legal compliance.
+
+## V2: World versus Me
+
+Public Moments are new objects with an explicit city/global visibility decision and consent, never projections of the private journal. Public payload schemas reject unknown private fields. There is no pipeline reading private observations into city atmosphere. Public captions/feelings and sanitized media are sent to the configured moderation service; no private note/passphrase is sent by this flow.
+
+Public rows expose city, prompt, approximate UI time, feeling, caption, language and media identifier. Internal `moment_ownership` links them to authenticated users for quotas, removal and accountability; readers cannot see that mapping. Operators still can. City-only means discoverable on a public city page, not restricted to residents. All approved content can be copied by readers.
+
+Private Moments use a distinct IndexedDB store with scope `guest` or authenticated user ID. Photo/caption are encrypted through the existing vault implementation and bound to the Moment UUID. Feeling/city/prompt/time metadata is readable on the device. Local scope filtering is application isolation, not protection from a person controlling the same browser profile. No cloud sync or automatic migration is claimed for these new private Moments. Export preserves ciphertext; delete/history erase/account erase in the current browser clear the corresponding local scope. Other devices' offline local copies are not remotely erased.
+
+Public Moments expire after 48 hours. Feed RLS and the media proxy enforce expiry immediately; the scheduled worker removes rows and queued storage objects, retaining retryable failures. Snapshot aggregates keep only thresholded dimensions and have a 30-day cleanup target. No raw private body-cycle events are collected. Backup/provider retention must be established by the deployment owner.
+
+World share cards only consume public identifiers. Personal Pattern sharing has a separate preview and explicit consent checkbox, using a bounded already-visible statistical summary. Downloading a card does not automatically post it anywhere. Private exports and voluntarily shared insights can still be sensitive.

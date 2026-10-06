@@ -18,6 +18,17 @@ import {
   Trash2,
 } from "lucide-react";
 import Moon from "./Moon";
+import Link from "next/link";
+import { worldMessages } from "@/lib/world/i18n";
+import WorldHeader from "./world/WorldHeader";
+import MomentLibrary from "./world/MomentLibrary";
+import PatternShare from "./world/PatternShare";
+import { worldAnalytics } from "@/lib/world/domain";
+import {
+  erasePrivateMoments,
+  listPrivateMoments,
+} from "@/lib/world/private-moments";
+import { privateScope } from "@/lib/world/client";
 import Checkin from "./Checkin";
 import { messages, direction, format, formatPlural } from "@/lib/i18n";
 import {
@@ -42,10 +53,17 @@ import {
 import { decrypt } from "@/lib/crypto";
 import { supabase } from "@/lib/supabase";
 type Tab = "today" | "memories" | "patterns" | "settings";
-export default function MoonApp() {
+export default function MoonApp({
+  initialTab = "today",
+}: {
+  initialTab?: Tab;
+}) {
+  useEffect(() => {
+    if (initialTab === "patterns") worldAnalytics.track("patterns_viewed");
+  }, [initialTab]);
   const [locale, setLocale] = useState("en");
   const m = messages(locale);
-  const [tab, setTab] = useState<Tab>("today");
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [onboarding, setOnboarding] = useState(0);
   const [accepted, setAccepted] = useState(false);
   const [ready, setReady] = useState(false);
@@ -153,6 +171,7 @@ export default function MoonApp() {
   }
   async function save(entry: Observation) {
     await saveObservation(entry, cloud);
+    worldAnalytics.track("personal_checkin_completed");
     setEntries((old) =>
       [entry, ...old.filter((o) => o.id !== entry.id)].sort((a, b) =>
         b.localDate.localeCompare(a.localDate),
@@ -195,6 +214,7 @@ export default function MoonApp() {
               observations: await listObservations(cloud),
               consents: consent,
               ledger: await exportLedger(cloud),
+              privateMoments: await listPrivateMoments(await privateScope()),
               preferences: { locale, units },
             },
             null,
@@ -236,6 +256,9 @@ export default function MoonApp() {
   if (onboarding)
     return (
       <main className="onboarding">
+        <Link className="back-world" href="/">
+          ← {worldMessages(locale).world}
+        </Link>
         <div className="brand">
           <MoonIcon size={20} />
           {m.brand}
@@ -313,30 +336,25 @@ export default function MoonApp() {
         86400000,
     ) + 1;
   return (
-    <div className="app">
-      <header className="header">
-        <button className="brand" onClick={() => changeTab("today")}>
-          <MoonIcon size={22} />
-          {m.brand}
-        </button>
-        <nav aria-label={m.brand}>
-          {tabs.map(({ id, icon: Icon }) => (
+    <div className="app personal-v2">
+      <WorldHeader
+        locale={locale}
+        active={tab === "patterns" ? "patterns" : "me"}
+      />
+      <nav className="personal-tabs" aria-label={m.settings}>
+        {tabs
+          .filter((t) => t.id !== "patterns")
+          .map(({ id, icon: Icon }) => (
             <button
               key={id}
               onClick={() => changeTab(id)}
-              className={tab === id ? "active" : ""}
+              aria-pressed={tab === id}
             >
-              <Icon size={17} />
-              <span>{m[id]}</span>
+              <Icon size={16} />
+              {m[id]}
             </button>
           ))}
-        </nav>
-        <button className="space-badge" onClick={() => changeTab("settings")}>
-          <span />
-          {cloud ? m.cloud : m.guest}
-          <ArrowUpRight size={13} />
-        </button>
-      </header>
+      </nav>
       <main className="main">
         {error && (
           <div role="alert" className="error global-error">
@@ -721,6 +739,10 @@ export default function MoonApp() {
                   <h1>{m.historyTitle}</h1>
                   <p>{m.historyBody}</p>
                 </div>
+                <MomentLibrary
+                  key={cloud ? personId : "guest"}
+                  locale={locale}
+                />
                 <div className="history-layout">
                   <div className="calendar">
                     <div className="calendar-top">
@@ -990,6 +1012,10 @@ export default function MoonApp() {
                           })}{" "}
                           · {m.exploratory}
                         </p>
+                        <PatternShare
+                          locale={locale}
+                          summary={`${p.variable === "moon" ? m.phases[p.group] : p.variable === "weekday" ? m.weekdays[p.group] : m.restfulnessGroup} · ${m.dimensions[p.dimension]}. ${format(m.difference, { value: fmtNumber(p.difference!, 2) })}. ${format(m.evidence, { count: p.n, periods: p.periods })}. ${m.exploratory}`}
+                        />
                       </div>
                     ))}
                 </section>
@@ -1021,6 +1047,10 @@ export default function MoonApp() {
                           })}{" "}
                           · {m.exploratory}
                         </p>
+                        <PatternShare
+                          locale={locale}
+                          summary={`${p.variable === "moon" ? m.phases[p.group] : p.variable === "weekday" ? m.weekdays[p.group] : m.restfulnessGroup} · ${m.dimensions[p.dimension]}. ${format(m.difference, { value: fmtNumber(p.difference!, 2) })}. ${format(m.evidence, { count: p.n, periods: p.periods })}. ${m.exploratory}`}
+                        />
                       </div>
                     ))}
                   {!patternResults.some(
@@ -1173,6 +1203,7 @@ export default function MoonApp() {
                         if (confirm(m.confirmAll))
                           void run(async () => {
                             await clearHistory(cloud);
+                            await erasePrivateMoments(await privateScope());
                             await refresh(cloud);
                           });
                       }}
@@ -1196,8 +1227,10 @@ export default function MoonApp() {
                                 },
                               });
                               if (!response.ok) throw new Error();
+                              await erasePrivateMoments(await privateScope());
                               await supabase()!.auth.signOut();
                             } else {
+                              await erasePrivateMoments("guest");
                               await eraseGuest();
                               window.location.reload();
                             }

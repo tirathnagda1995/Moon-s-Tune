@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import "./world.css";
 export const metadata: Metadata = {
-  title: "Moon Pattern — Discover the patterns within.",
+  title: "Moon Pattern — See how the world feels today.",
   description:
-    "Tell us how you feel. You never have to tell us why. A private space to discover the rhythms in your days.",
+    "See how the world feels today. Explore cities, share a small moment, and discover what moves you.",
   manifest: "/manifest.webmanifest",
   icons: { icon: "/icon.svg", apple: "/icon-192.png" },
   appleWebApp: {
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#101311",
+  themeColor: "#f5f4ec",
 };
 export default function RootLayout({
   children,

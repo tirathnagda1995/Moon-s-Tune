@@ -1,4 +1,4 @@
-import MoonApp from "@/components/MoonApp";
+import WorldApp from "@/components/world/WorldApp";
 export default function Page() {
-  return <MoonApp />;
+  return <WorldApp />;
 }

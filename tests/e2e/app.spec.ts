@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { test, expect } from "@playwright/test";
 async function onboard(page: import("@playwright/test").Page) {
-  await page.goto("/");
+  await page.goto("/me");
   await page.getByRole("button", { name: "Discover mine" }).click();
   await page.getByRole("checkbox").check();
   await page.getByRole("button", { name: "Start with today" }).click();
@@ -30,7 +30,7 @@ test("guest journey: save, reload, edit, history, export and erase", async ({
   await expect(page.getByText("Your correction · 100%").first()).toBeVisible();
   await page.getByRole("button", { name: "Memories", exact: true }).click();
   await expect(page.locator(".memory")).toHaveCount(1);
-  await page.getByRole("button", { name: "Patterns", exact: true }).click();
+  await page.getByRole("link", { name: "Patterns", exact: true }).click();
   await expect(
     page.getByText("Still getting to know your rhythms."),
   ).toBeVisible();
@@ -124,7 +124,10 @@ test("AI unavailable, mobile 320px and RTL fallback remain usable", async ({
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
-  await page.screenshot({ path: "artifacts/mobile-320.png", fullPage: true });
+  await page.screenshot({
+    path: "artifacts/v2-private-mobile-320.png",
+    fullPage: true,
+  });
   await page.getByRole("button", { name: "Your space", exact: true }).click();
   await page.getByLabel("Language", { exact: true }).selectOption("ar");
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
@@ -137,7 +140,10 @@ test("AI unavailable, mobile 320px and RTL fallback remain usable", async ({
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
-  await page.screenshot({ path: "artifacts/rtl-320.png", fullPage: true });
+  await page.screenshot({
+    path: "artifacts/v2-private-rtl-320.png",
+    fullPage: true,
+  });
 });
 test("desktop visual, no browser errors and offline guest use", async ({
   page,
@@ -147,7 +153,10 @@ test("desktop visual, no browser errors and offline guest use", async ({
   page.on("pageerror", (e) => errors.push(e.message));
   await page.setViewportSize({ width: 1440, height: 1100 });
   await onboard(page);
-  await page.screenshot({ path: "artifacts/desktop.png", fullPage: true });
+  await page.screenshot({
+    path: "artifacts/v2-private-desktop.png",
+    fullPage: true,
+  });
   await page.evaluate(async () => {
     await navigator.serviceWorker.ready;
   });

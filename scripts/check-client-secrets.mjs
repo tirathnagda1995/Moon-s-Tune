@@ -2,6 +2,8 @@ import { readdir, readFile } from "node:fs/promises";
 const forbidden = [
   "SUPABASE_SERVICE_ROLE_KEY",
   "LLM_API_KEY",
+  "MODERATION_API_KEY",
+  "CRON_SECRET",
   "moon-pattern-server-secret-canary",
 ];
 async function inspect(dir) {
